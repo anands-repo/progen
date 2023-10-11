@@ -291,6 +291,7 @@ class ProGenPreTrainedModel(PreTrainedModel):
     config_class = ProGenConfig
     base_model_prefix = "transformer"
     is_parallelizable = True
+    supports_gradient_checkpointing = True
 
     def __init__(self, *inputs, **kwargs):
         super().__init__(*inputs, **kwargs)
