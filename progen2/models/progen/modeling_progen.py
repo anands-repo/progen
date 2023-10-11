@@ -552,6 +552,15 @@ class ProGenForCausalLM(ProGenPreTrainedModel):
         self.model_parallel = False
         self.device_map = None
 
+    def _set_gradient_checkpointing(self, module, value=False):
+        """
+        Based on https://github.com/huggingface/transformers/blob/v4.34.0/src/transformers/models/t5/modeling_t5.py#L1557
+        Note that in this file, only ProGenModel does anything with the gradient_checkpointing variable. This is also
+        how T5 sets gradient_checkpointing.
+        """
+        if isinstance(module, ProGenModel):
+            module.config.gradient_checkpointing = value
+
     def parallelize(self, device_map=None):
         self.device_map = (
             get_device_map(len(self.transformer.h), range(torch.cuda.device_count()))
