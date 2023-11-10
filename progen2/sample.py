@@ -164,7 +164,8 @@ def main():
 
 
     with print_time('loading tokenizer'):
-        tokenizer = create_tokenizer_custom(file='tokenizer.json')
+        tokenizer_file = os.path.join(os.path.split(os.path.abspath(__file__))[0], "tokenizer.json")
+        tokenizer = create_tokenizer_custom(file=tokenizer_file)
 
     # (4) sanity
 
