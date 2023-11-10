@@ -12,6 +12,7 @@ import torch
 
 from tokenizers import Tokenizer
 from models.progen.modeling_progen import ProGenForCausalLM
+import json
 
 
 
@@ -43,6 +44,16 @@ def set_seed(seed, deterministic=True):
         torch.cuda.manual_seed(seed)
         torch.backends.cudnn.deterministic = deterministic
         torch.backends.cudnn.benchmark = not deterministic
+
+
+########################################################################
+# fix length
+def fix_length(ckpt, max_length=2048):
+    with open(os.path.join(ckpt, "config.json"), "r") as fhandle:
+        config = json.load(fhandle)
+    config["n_positions"] = max_length
+    with open(os.path.join(ckpt, "config.json"), "w") as fhandle:
+        json.dump(config, fhandle, indent=4)
 
 
 
@@ -109,7 +120,8 @@ def main():
     # (1) params
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', type=str, choices=models, default='progen2-large')
+    # parser.add_argument('--model', type=str, choices=models, default='progen2-large')
+    parser.add_argument("--ckpt", help="Checkpoint path", required=True)
     parser.add_argument('--device', type=str, default='cuda:0')
     parser.add_argument('--rng-seed', type=int, default=42)
     parser.add_argument('--rng-deterministic', default=True, type=lambda x: (str(x).lower() == 'true'))
@@ -133,16 +145,22 @@ def main():
         args.device = 'cpu'
 
     device = torch.device(args.device)
-    ckpt = f'./checkpoints/{args.model}'
+    # ckpt = f'./checkpoints/{args.model}'
 
     if device.type == 'cpu':
         print('falling back to fp32')
         args.fp16 = False
 
+    
+    # (2)b fix checkpoint
+
+    fix_length(args.ckpt)
+
+
     # (3) load
 
     with print_time('loading parameters'):
-        model = create_model(ckpt=ckpt, fp16=args.fp16).to(device)
+        model = create_model(ckpt=args.ckpt, fp16=args.fp16).to(device)
 
 
     with print_time('loading tokenizer'):
